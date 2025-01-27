@@ -113,7 +113,7 @@ const Foods = () => {
 
     const handleDelete = async (id) => {
         try {
-            const response = await fetch(`https://hayas-backend.onrender.com/grocery/${id}`, {
+            const response = await fetch(`https://hayas-backend.onrender.com/food/${id}`, {
                 method: 'DELETE',
             });
 
