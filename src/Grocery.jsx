@@ -7,41 +7,42 @@ const Grocery = () => {
     const [halfKg, setHalfKg] = useState('');
     const [oneKg, setOneKg] = useState('');
     const [products, setProducts] = useState([]);
-    const [filteredProducts, setFilteredProducts] = useState([]); // To hold the filtered products
-    const [loading, setLoading] = useState(true);  // Add loading state
-    const [editingProduct, setEditingProduct] = useState(null);  // To track which product is being edited
-    const [searchTerm, setSearchTerm] = useState(''); // Search term state
+    const [filteredProducts, setFilteredProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [editingProduct, setEditingProduct] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        // Fetch all products from backend
-        fetch('https://hayas-backend.onrender.com/grocery')
-            .then((response) => response.text())  // Use response.text() to handle empty response
-            .then((data) => {
-                // console.log('Fetched data:', data);  // Log the raw data
-                try {
-                    const parsedData = data ? JSON.parse(data) : [];  // Parse data only if it's not empty
-                    setProducts(parsedData);
-                    setFilteredProducts(parsedData);  // Initially, set all products as filtered
-                    setLoading(false);  // Data is fetched, set loading to false
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
-                    setLoading(false);  // Handle error gracefully
-                }
-            })
-            .catch((error) => {
-                console.error('Error fetching products:', error);
-                setLoading(false);  // In case of error, stop loading
-            });
+        fetchProducts();
     }, []);
 
     useEffect(() => {
-        // Filter products based on the search term
         const result = products.filter((product) =>
             product?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product?.description.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        setFilteredProducts(result);  // Update the filtered products state
-    }, [searchTerm, products]);  // Re-run whenever searchTerm or products change
+        setFilteredProducts(result);
+    }, [searchTerm, products]);
+
+    const fetchProducts = () => {
+        fetch('https://hayas-backend.onrender.com/grocery')
+            .then((response) => response.text())
+            .then((data) => {
+                try {
+                    const parsedData = data ? JSON.parse(data) : [];
+                    setProducts(parsedData);
+                    setFilteredProducts(parsedData);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                    setLoading(false);
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching products:', error);
+                setLoading(false);
+            });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -55,7 +56,6 @@ const Grocery = () => {
         };
 
         if (editingProduct) {
-            // If editing, update the product
             try {
                 const response = await fetch(`https://hayas-backend.onrender.com/grocery/${editingProduct._id}`, {
                     method: 'PUT',
@@ -68,14 +68,20 @@ const Grocery = () => {
                 if (response.ok) {
                     const data = await response.json();
                     alert('Product updated successfully');
-                    // Update the product in the state
                     setProducts(products.map((product) =>
                         product._id === editingProduct._id ? data.product : product
                     ));
                     setFilteredProducts(filteredProducts.map((product) =>
                         product._id === editingProduct._id ? data.product : product
                     ));
-                    setEditingProduct(null);  // Reset editing product
+                    setEditingProduct(null);
+                    fetchProducts();
+
+                    setImageURL('');
+                    setTitle('');
+                    setDescription('');
+                    setHalfKg('');
+                    setOneKg('');
                 } else {
                     alert('Error updating product');
                     console.error('Error:', response.statusText);
@@ -85,7 +91,6 @@ const Grocery = () => {
                 console.error(error);
             }
         } else {
-            // If adding new product
             try {
                 const response = await fetch('https://hayas-backend.onrender.com/grocery', {
                     method: 'POST',
@@ -98,8 +103,15 @@ const Grocery = () => {
                 if (response.ok) {
                     const data = await response.json();
                     alert('Product added successfully');
-                    setProducts([...products, data.product]);  // Add the new product to state
-                    setFilteredProducts([...filteredProducts, data.product]); // Add the new product to filtered list
+                    setProducts([...products, data.product]);
+                    setFilteredProducts([...filteredProducts, data.product]);
+                    fetchProducts();
+
+                    setImageURL('');
+                    setTitle('');
+                    setDescription('');
+                    setHalfKg('');
+                    setOneKg('');
                 } else {
                     alert('Error adding product');
                     console.error('Error:', response.statusText);
@@ -138,7 +150,7 @@ const Grocery = () => {
         setDescription(product.description);
         setHalfKg(product.halfKg);
         setOneKg(product.oneKg);
-        setEditingProduct(product);  // Set the product to be edited
+        setEditingProduct(product);
     };
 
     return (
@@ -197,7 +209,7 @@ const Grocery = () => {
                     type="text"
                     placeholder="Search products..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)} // Update search term on input change
+                    onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
 
@@ -208,7 +220,7 @@ const Grocery = () => {
                     </div>
                 ) : filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => (
-                        product && product.imageURL ? ( // Ensure product and imageURL are not undefined
+                        product && product.imageURL ? (
                             <div className="mainBox" key={product._id}>
                                 <div className="card">
                                     <span className="productImage">
@@ -246,7 +258,7 @@ const Grocery = () => {
                                         <span>
                                             <button
                                                 className="editbtn"
-                                                onClick={() => handleEdit(product)}  // Trigger handleEdit when clicked
+                                                onClick={() => handleEdit(product)}
                                             >
                                                 Edit
                                             </button>
@@ -254,7 +266,7 @@ const Grocery = () => {
                                         <span>
                                             <button
                                                 className="deletebtn"
-                                                onClick={() => handleDelete(product._id)}  // Call handleDelete on delete button click
+                                                onClick={() => handleDelete(product._id)}
                                             >
                                                 Delete
                                             </button>
