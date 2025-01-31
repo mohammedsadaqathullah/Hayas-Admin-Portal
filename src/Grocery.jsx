@@ -4,10 +4,9 @@ const Grocery = () => {
     const [imageURL, setImageURL] = useState('');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [halfKg, setHalfKg] = useState('');
-    const [oneKg, setOneKg] = useState('');
+    const [quantityOne, setQuantityOne] = useState(0); // Quantity for quantityOne
+    const [quantityTwo, setQuantityTwo] = useState(0); // Quantity for quantityTwo
     const [products, setProducts] = useState([]);
-    const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingProduct, setEditingProduct] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -16,111 +15,92 @@ const Grocery = () => {
         fetchProducts();
     }, []);
 
-    useEffect(() => {
-        const result = products.filter((product) =>
-            product?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product?.description.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setFilteredProducts(result);
-    }, [searchTerm, products]);
-
-    const fetchProducts = () => {
-        fetch('https://hayas-backend.onrender.com/grocery')
-            .then((response) => response.text())
-            .then((data) => {
-                try {
-                    const parsedData = data ? JSON.parse(data) : [];
-                    setProducts(parsedData);
-                    setFilteredProducts(parsedData);
-                    setLoading(false);
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
-                    setLoading(false);
-                }
-            })
-            .catch((error) => {
-                console.error('Error fetching products:', error);
-                setLoading(false);
-            });
+    const fetchProducts = async () => {
+        try {
+            const response = await fetch('https://hayas-backend.onrender.com/grocery');
+            const data = await response.json();
+            setProducts(data);
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            setLoading(false);
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Ensure all fields are filled before submitting
+        if (!imageURL || !title || !description) {
+            alert("All fields must be filled in.");
+            return;
+        }
+
         const productData = {
             imageURL,
             title,
             description,
-            halfKg,
-            oneKg
+            quantityOne,  // Store quantityOne
+            quantityTwo   // Store quantityTwo
         };
 
-        if (editingProduct) {
-            try {
-                const response = await fetch(`https://hayas-backend.onrender.com/grocery/${editingProduct._id}`, {
+        try {
+            let response;
+            if (editingProduct) {
+                // Update existing product
+                response = await fetch(`https://hayas-backend.onrender.com/grocery/${editingProduct._id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(productData)
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    alert('Product updated successfully');
-                    setProducts(products.map((product) =>
-                        product._id === editingProduct._id ? data.product : product
-                    ));
-                    setFilteredProducts(filteredProducts.map((product) =>
-                        product._id === editingProduct._id ? data.product : product
-                    ));
-                    setEditingProduct(null);
-                    fetchProducts();
-
-                    setImageURL('');
-                    setTitle('');
-                    setDescription('');
-                    setHalfKg('');
-                    setOneKg('');
-                } else {
-                    alert('Error updating product');
-                    console.error('Error:', response.statusText);
-                }
-            } catch (error) {
-                alert('Error updating product');
-                console.error(error);
-            }
-        } else {
-            try {
-                const response = await fetch('https://hayas-backend.onrender.com/grocery', {
+            } else {
+                // Create new product
+                response = await fetch('https://hayas-backend.onrender.com/grocery', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(productData)
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    alert('Product added successfully');
-                    setProducts([...products, data.product]);
-                    setFilteredProducts([...filteredProducts, data.product]);
-                    fetchProducts();
-
-                    setImageURL('');
-                    setTitle('');
-                    setDescription('');
-                    setHalfKg('');
-                    setOneKg('');
-                } else {
-                    alert('Error adding product');
-                    console.error('Error:', response.statusText);
-                }
-            } catch (error) {
-                alert('Error adding product');
-                console.error(error);
             }
+
+            if (!response.ok) {
+                throw new Error(`Error: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            if (editingProduct) {
+                alert('Product updated successfully');
+                setProducts(products.map((product) =>
+                    product._id === editingProduct._id ? data.product : product
+                ));
+            } else {
+                alert('Product added successfully');
+                setProducts([...products, data.product]);
+            }
+
+            // Reset form and state after submit
+            setEditingProduct(null);
+            setImageURL('');
+            setTitle('');
+            setDescription('');
+            setQuantityOne(0);
+            setQuantityTwo(0);
+        } catch (error) {
+            alert('There was an error with the request');
+            console.error('Error:', error);
         }
+    };
+
+    const handleEdit = (product) => {
+        setImageURL(product.imageURL);
+        setTitle(product.title);
+        setDescription(product.description);
+        setQuantityOne(product.quantityOne);
+        setQuantityTwo(product.quantityTwo);
+        setEditingProduct(product);
     };
 
     const handleDelete = async (id) => {
@@ -132,7 +112,6 @@ const Grocery = () => {
             if (response.ok) {
                 const updatedProducts = products.filter((product) => product._id !== id);
                 setProducts(updatedProducts);
-                setFilteredProducts(updatedProducts);
                 alert('Product deleted successfully');
             } else {
                 alert('Error deleting product');
@@ -142,15 +121,6 @@ const Grocery = () => {
             alert('Error deleting product');
             console.error(error);
         }
-    };
-
-    const handleEdit = (product) => {
-        setImageURL(product.imageURL);
-        setTitle(product.title);
-        setDescription(product.description);
-        setHalfKg(product.halfKg);
-        setOneKg(product.oneKg);
-        setEditingProduct(product);
     };
 
     return (
@@ -185,25 +155,26 @@ const Grocery = () => {
                     />
                 </div>
                 <div>
-                    <label>Price for Half Kg:</label>
+                    <label>Quantity One:</label>
                     <input
-                        type="number"
-                        value={halfKg}
-                        onChange={(e) => setHalfKg(e.target.value)}
+                        type="text"
+                        value={quantityOne}
+                        onChange={(e) => setQuantityOne(e.target.value)}
                         required
                     />
                 </div>
                 <div>
-                    <label>Price for One Kg:</label>
+                    <label>Quantity Two:</label>
                     <input
-                        type="number"
-                        value={oneKg}
-                        onChange={(e) => setOneKg(e.target.value)}
+                        type="text"
+                        value={quantityTwo}
+                        onChange={(e) => setQuantityTwo(e.target.value)}
                         required
                     />
                 </div>
                 <button type="submit">{editingProduct ? 'Update Product' : 'Add Product'}</button>
             </form>
+
             <div className="searchInput">
                 <input
                     type="text"
@@ -218,8 +189,8 @@ const Grocery = () => {
                     <div className="loading">
                         <div className="spinner"></div>
                     </div>
-                ) : filteredProducts.length > 0 ? (
-                    filteredProducts.map((product) => (
+                ) : products.length > 0 ? (
+                    products.map((product) => (
                         product && product.imageURL ? (
                             <div className="mainBox" key={product._id}>
                                 <div className="card">
@@ -229,48 +200,30 @@ const Grocery = () => {
                                     <span className="title">
                                         <p>{product.title}</p>
                                     </span>
-                                    <span className="description">
+                                    <div className="description">
                                         <p>{product.description}</p>
-                                    </span>
-                                    <span className="addbtn">
-                                        <span>
-                                            <button> - </button>
-                                        </span>
-                                        <span>
-                                            <span>{product.halfKg}</span>Rs / 500gm
-                                        </span>
-                                        <span>
-                                            <button> + </button>
-                                        </span>
-                                    </span>
-                                    <span className="addbtn">
-                                        <span>
-                                            <button> - </button>
-                                        </span>
-                                        <span>
-                                            <span>{product.oneKg}</span>Rs / 1kg
-                                        </span>
-                                        <span>
-                                            <button> + </button>
-                                        </span>
-                                    </span>
+                                    </div>
+                                    <div className="quantity">
+                                        <div>
+                                            <span>{product.quantityOne}</span>
+                                        </div>
+                                        <div>
+                                            <span>{product.quantityTwo}</span>
+                                        </div>
+                                    </div>
                                     <span className="alterbtns">
-                                        <span>
-                                            <button
-                                                className="editbtn"
-                                                onClick={() => handleEdit(product)}
-                                            >
-                                                Edit
-                                            </button>
-                                        </span>
-                                        <span>
-                                            <button
-                                                className="deletebtn"
-                                                onClick={() => handleDelete(product._id)}
-                                            >
-                                                Delete
-                                            </button>
-                                        </span>
+                                        <button
+                                            className="editbtn"
+                                            onClick={() => handleEdit(product)}
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            className="deletebtn"
+                                            onClick={() => handleDelete(product._id)}
+                                        >
+                                            Delete
+                                        </button>
                                     </span>
                                 </div>
                             </div>

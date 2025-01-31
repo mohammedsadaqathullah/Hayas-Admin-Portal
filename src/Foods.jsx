@@ -4,8 +4,8 @@ const Foods = () => {
     const [imageURL, setImageURL] = useState('');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [halfKg, setHalfKg] = useState('');
-    const [oneKg, setOneKg] = useState('');
+    const [quantityOne, setQuantityOne] = useState(0); // Replace halfKg with quantityOne
+    const [quantityTwo, setQuantityTwo] = useState(0); // Replace oneKg with quantityTwo
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -51,8 +51,8 @@ const Foods = () => {
             imageURL,
             title,
             description,
-            halfKg,
-            oneKg
+            quantityOne, // Use quantityOne
+            quantityTwo  // Use quantityTwo
         };
 
         if (editingProduct) {
@@ -80,8 +80,8 @@ const Foods = () => {
                     setImageURL('');
                     setTitle('');
                     setDescription('');
-                    setHalfKg('');
-                    setOneKg('');
+                    setQuantityOne(0);
+                    setQuantityTwo(0);
                 } else {
                     alert('Error updating product');
                     console.error('Error:', response.statusText);
@@ -110,8 +110,8 @@ const Foods = () => {
                     setImageURL('');
                     setTitle('');
                     setDescription('');
-                    setHalfKg('');
-                    setOneKg('');
+                    setQuantityOne(0);
+                    setQuantityTwo(0);
                 } else {
                     alert('Error adding product');
                     console.error('Error:', response.statusText);
@@ -148,8 +148,8 @@ const Foods = () => {
         setImageURL(product.imageURL);
         setTitle(product.title);
         setDescription(product.description);
-        setHalfKg(product.halfKg);
-        setOneKg(product.oneKg);
+        setQuantityOne(product.quantityOne);  // Adjust for quantityOne
+        setQuantityTwo(product.quantityTwo);  // Adjust for quantityTwo
         setEditingProduct(product);
     };
 
@@ -185,25 +185,26 @@ const Foods = () => {
                     />
                 </div>
                 <div>
-                    <label>Price for Half Kg:</label>
+                    <label>Quantity One:</label>
                     <input
-                        type="number"
-                        value={halfKg}
-                        onChange={(e) => setHalfKg(e.target.value)}
+                        type="text"
+                        value={quantityOne}
+                        onChange={(e) => setQuantityOne(e.target.value)}
                         required
                     />
                 </div>
                 <div>
-                    <label>Price for One Kg:</label>
+                    <label>Quantity Two:</label>
                     <input
-                        type="number"
-                        value={oneKg}
-                        onChange={(e) => setOneKg(e.target.value)}
+                        type="text"
+                        value={quantityTwo}
+                        onChange={(e) => setQuantityTwo(e.target.value)}
                         required
                     />
                 </div>
                 <button type="submit">{editingProduct ? 'Update Product' : 'Add Product'}</button>
             </form>
+
             <div className="searchInput">
                 <input
                     type="text"
@@ -229,48 +230,30 @@ const Foods = () => {
                                     <span className="title">
                                         <p>{product.title}</p>
                                     </span>
-                                    <span className="description">
+                                    <div className="description">
                                         <p>{product.description}</p>
-                                    </span>
-                                    <span className="addbtn">
-                                        <span>
-                                            <button> - </button>
-                                        </span>
-                                        <span>
-                                            <span>{product.halfKg}</span>Rs / 500gm
-                                        </span>
-                                        <span>
-                                            <button> + </button>
-                                        </span>
-                                    </span>
-                                    <span className="addbtn">
-                                        <span>
-                                            <button> - </button>
-                                        </span>
-                                        <span>
-                                            <span>{product.oneKg}</span>Rs / 1kg
-                                        </span>
-                                        <span>
-                                            <button> + </button>
-                                        </span>
-                                    </span>
+                                    </div>
+                                    <div className="quantity">
+                                        <div>
+                                            <span>{product.quantityOne}</span>
+                                        </div>
+                                        <div>
+                                            <span>{product.quantityTwo}</span>
+                                        </div>
+                                    </div>
                                     <span className="alterbtns">
-                                        <span>
-                                            <button
-                                                className="editbtn"
-                                                onClick={() => handleEdit(product)}
-                                            >
-                                                Edit
-                                            </button>
-                                        </span>
-                                        <span>
-                                            <button
-                                                className="deletebtn"
-                                                onClick={() => handleDelete(product._id)}
-                                            >
-                                                Delete
-                                            </button>
-                                        </span>
+                                        <button
+                                            className="editbtn"
+                                            onClick={() => handleEdit(product)}
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            className="deletebtn"
+                                            onClick={() => handleDelete(product._id)}
+                                        >
+                                            Delete
+                                        </button>
                                     </span>
                                 </div>
                             </div>
