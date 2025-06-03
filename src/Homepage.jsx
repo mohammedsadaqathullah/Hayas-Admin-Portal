@@ -38,6 +38,19 @@ const Homepage = () => {
                     }}
                 >Foods</div>
             </Link>
+            <Link to='/VegetablesAndFruits' style={{ textDecoration: "none" }}>
+                <div
+                    style={{
+                        width: "200px",
+                        height: "25px",
+                        padding: "10px",
+                        backgroundColor: "black",
+                        color: "white",
+                        textAlign: "center",
+                        alignSelf: "center"
+                    }}
+                >Vegetables And Fruits</div>
+            </Link>
         </div>
     )
 }
