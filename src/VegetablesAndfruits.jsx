@@ -169,7 +169,7 @@ const VegetablesAndFruits = () => {
                         type="text"
                         value={quantityTwo}
                         onChange={(e) => setQuantityTwo(e.target.value)}
-                        required
+                        
                     />
                 </div>
                 <button type="submit">{editingProduct ? 'Update Product' : 'Add Product'}</button>

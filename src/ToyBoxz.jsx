@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 
-const Grocery = () => {
+const Toyboxz = () => {
     const [imageURL, setImageURL] = useState('');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [quantityOne, setQuantityOne] = useState(0); // Quantity for quantityOne
-    const [quantityTwo, setQuantityTwo] = useState(0); // Quantity for quantityTwo
+    const [quantityOne, setQuantityOne] = useState(0);
+    const [quantityTwo, setQuantityTwo] = useState(0);
     const [products, setProducts] = useState([]);
+    const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingProduct, setEditingProduct] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -15,82 +16,131 @@ const Grocery = () => {
         fetchProducts();
     }, []);
 
-    const fetchProducts = async () => {
-        try {
-            const response = await fetch('https://hayas-backend.onrender.com/grocery');
-            const data = await response.json();
-            setProducts(data);
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            setLoading(false);
-        }
+    useEffect(() => {
+        const result = products.filter((product) =>
+            product?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product?.description.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredProducts(result);
+    }, [searchTerm, products]);
+
+    const fetchProducts = () => {
+        fetch('https://hayas-backend.onrender.com/toyboxz')
+            .then((response) => response.text())
+            .then((data) => {
+                try {
+                    const parsedData = data ? JSON.parse(data) : [];
+                    setProducts(parsedData);
+                    setFilteredProducts(parsedData);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                    setLoading(false);
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching products:', error);
+                setLoading(false);
+            });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Ensure all fields are filled before submitting
-        if (!imageURL || !title || !description) {
-            alert("All fields must be filled in.");
-            return;
-        }
-
         const productData = {
             imageURL,
             title,
             description,
-            quantityOne,  // Store quantityOne
-            quantityTwo   // Store quantityTwo
+            quantityOne,
+            quantityTwo
         };
 
-        try {
-            let response;
-            if (editingProduct) {
-                // Update existing product
-                response = await fetch(`https://hayas-backend.onrender.com/grocery/${editingProduct._id}`, {
+        if (editingProduct) {
+            try {
+                const response = await fetch(`https://hayas-backend.onrender.com/toyboxz/${editingProduct._id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(productData)
                 });
-            } else {
-                // Create new product
-                response = await fetch('https://hayas-backend.onrender.com/grocery', {
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('Product updated successfully');
+                    setProducts(products.map((product) =>
+                        product._id === editingProduct._id ? data.product : product
+                    ));
+                    setFilteredProducts(filteredProducts.map((product) =>
+                        product._id === editingProduct._id ? data.product : product
+                    ));
+                    setEditingProduct(null);
+                    fetchProducts();
+
+                    setImageURL('');
+                    setTitle('');
+                    setDescription('');
+                    setQuantityOne(0);
+                    setQuantityTwo(0);
+                } else {
+                    alert('Error updating product');
+                    console.error('Error:', response.statusText);
+                }
+            } catch (error) {
+                alert('Error updating product');
+                console.error(error);
+            }
+        } else {
+            try {
+                const response = await fetch('https://hayas-backend.onrender.com/toyboxz', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(productData)
                 });
-            }
 
-            if (!response.ok) {
-                throw new Error(`Error: ${response.statusText}`);
-            }
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('Product added successfully');
+                    setProducts([...products, data.product]);
+                    setFilteredProducts([...filteredProducts, data.product]);
+                    fetchProducts();
 
-            const data = await response.json();
-            if (editingProduct) {
-                alert('Product updated successfully');
-                setProducts(products.map((product) =>
-                    product._id === editingProduct._id ? data.product : product
-                ));
+                    setImageURL('');
+                    setTitle('');
+                    setDescription('');
+                    setQuantityOne(0);
+                    setQuantityTwo(0);
+                } else {
+                    alert('Error adding product');
+                    console.error('Error:', response.statusText);
+                }
+            } catch (error) {
+                alert('Error adding product');
+                console.error(error);
+            }
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const response = await fetch(`https://hayas-backend.onrender.com/toyboxz/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                const updatedProducts = products.filter((product) => product._id !== id);
+                setProducts(updatedProducts);
+                setFilteredProducts(updatedProducts);
+                alert('Product deleted successfully');
             } else {
-                alert('Product added successfully');
-                setProducts([...products, data.product]);
+                alert('Error deleting product');
+                console.error('Error:', response.statusText);
             }
-
-            // Reset form and state after submit
-            setEditingProduct(null);
-            setImageURL('');
-            setTitle('');
-            setDescription('');
-            setQuantityOne(0);
-            setQuantityTwo(0);
         } catch (error) {
-            alert('There was an error with the request');
-            console.error('Error:', error);
+            alert('Error deleting product');
+            console.error(error);
         }
     };
 
@@ -103,30 +153,10 @@ const Grocery = () => {
         setEditingProduct(product);
     };
 
-    const handleDelete = async (id) => {
-        try {
-            const response = await fetch(`https://hayas-backend.onrender.com/grocery/${id}`, {
-                method: 'DELETE',
-            });
-
-            if (response.ok) {
-                const updatedProducts = products.filter((product) => product._id !== id);
-                setProducts(updatedProducts);
-                alert('Product deleted successfully');
-            } else {
-                alert('Error deleting product');
-                console.error('Error:', response.statusText);
-            }
-        } catch (error) {
-            alert('Error deleting product');
-            console.error(error);
-        }
-    };
-
     return (
         <div className="groceryAddingContainer">
             <form onSubmit={handleSubmit}>
-                <h2>Grocery</h2>
+                <h2>Toyboxz</h2>
                 <div>
                     <label>Image URL:</label>
                     <input
@@ -189,8 +219,8 @@ const Grocery = () => {
                     <div className="loading">
                         <div className="spinner"></div>
                     </div>
-                ) : products.length > 0 ? (
-                    products.map((product) => (
+                ) : filteredProducts.length > 0 ? (
+                    filteredProducts.map((product) => (
                         product && product.imageURL ? (
                             <div className="mainBox" key={product._id}>
                                 <div className="card">
@@ -237,4 +267,4 @@ const Grocery = () => {
     );
 };
 
-export default Grocery;
+export default Toyboxz;
