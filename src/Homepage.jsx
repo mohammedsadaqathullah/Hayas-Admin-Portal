@@ -50,7 +50,8 @@ const Homepage = () => {
                         alignSelf: "center"
                     }}
                 >Vegetables And Fruits</div>
-            </Link> <Link to='/toyboxz' style={{ textDecoration: "none" }}>
+            </Link> 
+            <Link to='/toyboxz' style={{ textDecoration: "none" }}>
                 <div
                     style={{
                         width: "200px",
@@ -62,6 +63,19 @@ const Homepage = () => {
                         alignSelf: "center"
                     }}
                 >ToyBoxz</div>
+            </Link>
+             <Link to='/orderDashboard' style={{ textDecoration: "none" }}>
+                <div
+                    style={{
+                        width: "200px",
+                        height: "25px",
+                        padding: "10px",
+                        backgroundColor: "black",
+                        color: "white",
+                        textAlign: "center",
+                        alignSelf: "center"
+                    }}
+                >Order Dashboard</div>
             </Link>
         </div>
     )
